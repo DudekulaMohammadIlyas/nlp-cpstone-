@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Neural Workspace</title>
+    <style>
+        :root { --accent: #8b5cf6; --success: #10b981; --danger: #f43f5e; --dark: #0f172a; --panel: #1e293b; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--dark); color: #f8fafc; margin: 0; padding: 20px; }
+        .dashboard { max-width: 1100px; margin: auto; }
+        .hero { text-align: center; padding: 40px 0; border-bottom: 1px solid #334155; margin-bottom: 40px; }
+        .hero h1 { font-size: 2.5rem; margin: 0; background: linear-gradient(to right, #8b5cf6, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; }
+        
+        .card { background: var(--panel); border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); border: 1px solid #334155; margin-bottom: 30px; }
+        textarea { width: 100%; height: 140px; background: #0f172a; border: 1px solid #334155; color: #cbd5e1; border-radius: 12px; padding: 15px; font-size: 16px; margin-bottom: 20px; box-sizing: border-box; }
+        
+        .upload-trigger { border: 2px dashed #475569; padding: 20px; border-radius: 12px; text-align: center; cursor: pointer; transition: 0.3s; color: #94a3b8; }
+        .upload-trigger:hover { border-color: var(--accent); background: #1e293b; color: white; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; display: none; }
+        .stat-box { background: #0f172a; padding: 15px; border-radius: 12px; border-top: 3px solid var(--accent); text-align: center; }
+        .stat-box.noise { border-top-color: var(--danger); }
+        .stat-val { display: block; font-size: 1.4rem; font-weight: bold; margin-bottom: 4px; }
+
+        .btn { width: 100%; padding: 16px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 1rem; color: white; box-shadow: 0 4px 14px rgba(0,0,0,0.4); }
+        .btn-p { background: var(--accent); margin-top: 20px; }
+        .btn-s { background: var(--success); }
+        .btn:hover { transform: scale(1.01); filter: brightness(1.2); }
+
+        pre { background: #0f172a; padding: 25px; border-radius: 12px; border: 1px solid #334155; white-space: pre-wrap; line-height: 1.8; color: #94a3b8; }
+        .loader { display: none; text-align: center; color: var(--accent); margin: 10px 0; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <div class="hero">
+        <h1>✨ AI NEURAL HUB</h1>
+        <p style="color: #64748b;">Ultra-Fast Document Summarization & Regional Translation</p>
+    </div>
+
+    <div class="card">
+        <h3 style="color:var(--accent); text-transform:uppercase; font-size:0.8rem;">Input Module</h3>
+        <textarea id="textIn" placeholder="Type or paste text here..."></textarea>
+        <div class="upload-trigger" onclick="document.getElementById('fileIn').click()">
+            <span id="fileLabel">📁 Drop PDF, DOCX, or TXT here</span>
+            <input type="file" id="fileIn" hidden onchange="document.getElementById('fileLabel').innerText = this.files[0].name">
+        </div>
+        <button class="btn btn-p" onclick="processAll()">⚡ Execute Neural Pipeline</button>
+        <div id="loading" class="loader">Neural Engine is Processing...</div>
+    </div>
+
+    <div class="card">
+        <h3 style="color:var(--danger); text-transform:uppercase; font-size:0.8rem;">Module 1 & 2: Analytics & Summary</h3>
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-box">Words Found<span class="stat-val" id="val1">-</span></div>
+            <div class="stat-box">Noise Removed<span class="stat-val" id="val2" style="color:var(--danger);">-</span></div>
+            <div class="stat-box noise">Noise Found %<span class="stat-val" id="val3" style="color:var(--danger);">-</span></div>
+            <div class="stat-box">Processing Time<span class="stat-val" id="val4">-</span></div>
+        </div>
+        <pre id="sumOut">Awaiting Data...</pre>
+    </div>
+
+    <div class="card" style="border-top: 4px solid var(--success);">
+        <h3 style="color:var(--success); text-transform:uppercase; font-size:0.8rem;">Module 3: Regional Translation</h3>
+        <select id="langChoice" style="width:100%; padding:15px; border-radius:10px; background:#0f172a; color:white; border:1px solid #334155;">
+            <option value="te">Telugu (తెలుగు)</option>
+            <option value="hi">Hindi (हिंदी)</option>
+            <option value="ta">Tamil (தமிழ்)</option>
+            <option value="kn">Kannada (ಕನ್ನಡ)</option>
+        </select>
+        <button class="btn btn-s" onclick="runTranslate()" style="margin-top:15px;">🌐 Translate Summary</button>
+        <pre id="transOut" style="margin-top:20px; border-left: 5px solid var(--success);">...</pre>
+    </div>
+</div>
+
+<script>
+async function processAll() {
+    const textIn = document.getElementById('textIn').value;
+    const fileIn = document.getElementById('fileIn').files[0];
+    if (!textIn && !fileIn) return alert("No input detected.");
+
+    const formData = new FormData();
+    if (fileIn) formData.append('file', fileIn);
+    else formData.append('text', textIn);
+
+    document.getElementById("loading").style.display = "block";
+
+    const res = await fetch("/process", { method: "POST", body: formData });
+    const data = await res.json();
+    
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("statsGrid").style.display = "grid";
+    document.getElementById("val1").innerText = data.stats.original_words;
+    document.getElementById("val2").innerText = data.stats.noise_found;
+    document.getElementById("val3").innerText = data.stats.noise_percentage;
+    document.getElementById("val4").innerText = data.stats.exec_time + "s";
+    document.getElementById("sumOut").innerText = data.summary;
+}
+
+async function runTranslate() {
+    const summary = document.getElementById("sumOut").innerText;
+    const lang = document.getElementById("langChoice").value;
+    if(summary === "Awaiting Data...") return;
+
+    document.getElementById("transOut").innerText = "Translating...";
+    const res = await fetch("/translate", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ summary, lang })
+    });
+    const data = await res.json();
+    document.getElementById("transOut").innerText = data.translated || data.error;
+}
+</script>
+
+</body>
+</html>
