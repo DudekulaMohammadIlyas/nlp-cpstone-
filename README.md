@@ -32,14 +32,14 @@ The application features a responsive web interface for interactive text analysi
 - **Real-time Processing Time**: Tracks execution speed for performance monitoring
 
 ### Abstractive Summarization (Module 2)
-- **T5 Transformer Model**: Uses `t5-small` for efficient, high-quality text summarization
-- **Configurable Summary Length**: Adjust output to requested number of lines
+- **T5 Transformer Model**: Uses `t5-small` (60M parameters) for efficient, high-quality text summarization
+- **Configurable Summary Length**: Token-based output (max 400 tokens, min 120 tokens)
 - **Advanced Decoding Strategies**:
-  - Beam search with 6 beams for better quality
-  - N-gram blocking to prevent repetition
-  - Length penalty optimization
-  - Early stopping for efficiency
-- **Hallucination Prevention**: Multiple mechanisms to ensure factually grounded output
+  - **Beam Search**: 3 beams for optimal speed-quality balance
+  - **N-gram Blocking**: `no_repeat_ngram_size=3` prevents repetitive outputs
+  - **Length Penalty**: 2.0 to encourage balanced summary length
+  - **Early Stopping**: Terminates generation when sequences become redundant
+- **Hallucination Prevention**: N-gram blocking and length constraints ensure factually grounded output
 
 ### Multilingual Translation (Module 3)
 - **Supported Languages**:
@@ -53,9 +53,11 @@ The application features a responsive web interface for interactive text analysi
 ### Web Interface
 - **Modern, Responsive Design**: Works on desktop and mobile devices
 - **Real-time Processing Pipeline**: All modules execute sequentially
-- **Visual Stats Grid**: Displays key metrics in easy-to-read format
+- **Multi-Format File Upload**: Supports PDF, DOCX, and TXT files
+- **Dual Input Mode**: Type text directly or upload documents
+- **Visual Stats Grid**: Displays key metrics (words found, noise removed, processing time)
 - **Color-coded Module Sections**: Intuitive navigation between pipeline stages
-- **Performance Timers**: Shows processing duration for each module
+- **Performance Metrics**: Real-time execution time tracking
 
 ---
 
@@ -99,6 +101,8 @@ torch
 spacy
 nltk
 deep-translator
+PyPDF2
+python-docx
 ```
 
 ---
@@ -281,15 +285,17 @@ nlp-cpstone-/
 - **Tokenization**: NLTK used for sentence and word tokenization
 
 ### Module 2: T5 Summarization
-- **Model**: `t5-small` (60M parameters, optimized for speed)
-- **Tokenization**: Custom tokenization with 1024 token limit
+- **Model**: `t5-small` (60M parameters) - Pre-trained on 750GB of text (C4 dataset)
+- **Task Format**: Prefix-based task specification (`"summarize: " + text`)
+- **Input Tokenization**: Max token limit of 1024 (automatic truncation)
 - **Decoding Parameters**:
-  - `max_length`: 600 tokens
-  - `min_length`: 200 tokens
-  - `num_beams`: 6 (beam search)
-  - `no_repeat_ngram_size`: 3
-  - `length_penalty`: 4.0
-- **Filtering**: Selects requested number of sentences from generated summary
+  - `max_length`: 400 tokens
+  - `min_length`: 120 tokens
+  - `num_beams`: 3 (beam search - optimized for speed/quality)
+  - `no_repeat_ngram_size`: 3 (prevents n-gram repetition)
+  - `length_penalty`: 2.0 (controls output length)
+  - `early_stopping`: True (stops when redundant patterns detected)
+- **Output**: High-quality abstractive summaries with reduced hallucination
 
 ### Module 3: Translation
 - **Provider**: Google Translate API (via deep-translator library)
@@ -395,14 +401,77 @@ python -m spacy download en_core_web_sm
 
 Typical execution times on standard hardware (Intel i7, 8GB RAM):
 
-| Module | Task | Time |
-|--------|------|------|
-| Module 1 | Clean & Analyze | 0.1-0.3s |
-| Module 2 | Summarize | 1-3s |
-| Module 3 | Translate | 0.5-1.5s |
-| **Total** | **Complete Pipeline** | **1.5-5s** |
+| Module | Task | Time | Hardware |
+|--------|------|------|----------|
+| Module 1 | Clean & Analyze & Tokenize | 0.1-0.3s | CPU |
+| Module 2 | T5 Summarization (3-beam) | 1-2s | CPU/GPU |
+| Module 3 | Translate (4 languages) | 0.5-1.5s | API |
+| **Total** | **Complete Pipeline** | **1.5-4s** | Typical |
 
-*Note: First run includes model initialization (~30s per module)*
+*Note: First run includes model initialization (~30s). Subsequent runs are faster with cached models.*
+
+**Performance Tip**: Use GPU acceleration for faster inference on Module 2.
+
+---
+
+## NLP Techniques Used
+
+### Core NLP Techniques
+
+1. **Text Tokenization**
+   - Word tokenization using NLTK `word_tokenize()`
+   - Sentence tokenization using NLTK `sent_tokenize()`
+   - Subword tokenization via T5Tokenizer for transformer compatibility
+
+2. **Text Preprocessing & Noise Reduction**
+   - Regex-based pattern matching to identify non-alphanumeric characters
+   - Whitespace normalization using regex
+   - Noise percentage calculation for text quality assessment
+
+3. **Transformer-Based Abstractive Summarization**
+   - **Architecture**: T5 (Text-to-Text Transfer Transformer)
+   - **Pre-training**: Transfer learning using C4 corpus (750GB cleaned text)
+   - **Task Format**: Prefix-based task specification (`"summarize: " + text`)
+   - **Inference**: Encoder-decoder architecture with `T5ForConditionalGeneration`
+
+4. **Advanced Decoding Strategies**
+   - **Beam Search**: Explores multiple hypothesis sequences (3 beams)
+   - **N-gram Blocking**: Prevents repetitive patterns with `no_repeat_ngram_size=3`
+   - **Length Penalty**: Controls output length with penalty factor 2.0
+   - **Early Stopping**: Terminates when sequences become redundant
+
+5. **Multilingual Neural Machine Translation**
+   - Language auto-detection
+   - Google Translate API integration
+   - Support for 4 regional languages (Telugu, Hindi, Tamil, Kannada)
+
+6. **Document Processing**
+   - PDF text extraction using PyPDF2
+   - DOCX parsing using python-docx
+   - Multi-format input support (PDF, DOCX, TXT)
+
+### Pipeline Architecture
+
+```
+Raw Text/Document
+    ↓
+[Module 1: Tokenization & Cleaning]
+    ├─ Word tokenization
+    ├─ Noise detection & removal
+    └─ Whitespace normalization
+    ↓
+[Module 2: T5 Summarization]
+    ├─ T5Tokenizer (subword tokenization)
+    ├─ T5 Encoder (768-dim embeddings)
+    ├─ T5 Decoder with Beam Search
+    └─ Early stopping & length control
+    ↓
+[Module 3: Translation]
+    ├─ Language detection (auto)
+    └─ Neural Machine Translation
+    ↓
+Final Output (Summary + Translation)
+```
 
 ---
 
