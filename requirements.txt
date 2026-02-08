@@ -1,8 +1,8 @@
-Flask==2.3.3
-transformers==4.35.2
-torch==2.1.1
-spacy==3.7.2
-nltk==3.8.1
-deep-translator==1.11.4
-PyPDF2==4.0.1
-python-docx==0.8.11
+Flask
+transformers
+torch
+spacy
+nltk
+deep-translator
+PyPDF2
+python-docx
