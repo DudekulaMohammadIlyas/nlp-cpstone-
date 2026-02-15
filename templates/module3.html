@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Research Gap & Contribution</h1>
+
+<div class="card">
+<h3>Limitations in Existing Systems</h3>
+<ul>
+<li>No explanation of why sentences are selected</li>
+<li>Word-level translation loses contextual meaning</li>
+<li>No linguistic visualization of cleaned tokens</li>
+<li>Separate tools for summarization and translation</li>
+</ul>
+</div>
+
+<div class="card">
+<h3>How This Project Fills the Gap</h3>
+<ul>
+<li>Provides explainable sentence importance scoring</li>
+<li>Maintains context-aware multilingual translation</li>
+<li>Displays cleaned tokens and POS linguistic analysis</li>
+<li>Unified pipeline combining summarization, explanation and translation</li>
+</ul>
+</div>
+
+<a href="/dashboard"><button>Open Dashboard →</button></a>
+{% endblock %}

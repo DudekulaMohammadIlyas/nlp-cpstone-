@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>Multilingual Translation Studio</h1>
+
+<!-- Generated Summary -->
+<div class="card">
+    <h3>Generated Summary</h3>
+    <p id="summaryText" style="font-size:1.1rem; line-height:1.8; color:#1e293b;">
+        {{ summary }}
+    </p>
+
+    <div style="margin-top:20px; text-align:center;">
+        <button class="btn" onclick="playSummary()">🔊 Play</button>
+        <button class="btn btn-danger" onclick="stopSummary()">⛔ Stop</button>
+    </div>
+</div>
+
+<!-- Language Selection -->
+<div class="card">
+    <h3>Select Target Language</h3>
+
+    <form method="POST">
+        <select name="lang" style="padding:12px; border-radius:10px; width:100%; margin-bottom:15px;">
+            <option value="hi" {% if selected_lang=='hi' %}selected{% endif %}>Hindi</option>
+            <option value="te" {% if selected_lang=='te' %}selected{% endif %}>Telugu</option>
+            <option value="ta" {% if selected_lang=='ta' %}selected{% endif %}>Tamil</option>
+            <option value="kn" {% if selected_lang=='kn' %}selected{% endif %}>Kannada</option>
+        </select>
+
+        <button class="btn" type="submit">Translate Summary</button>
+    </form>
+</div>
+
+<!-- Translated Output -->
+{% if translated %}
+<div class="card">
+    <h3>Translated Summary ({{ selected_lang|upper }})</h3>
+
+    <div id="translatedText"
+         style="background:#f1f5f9; padding:18px; border-radius:12px; font-size:1.15rem; line-height:1.8;">
+        {{ translated }}
+    </div>
+
+    <div style="margin-top:20px; text-align:center;">
+        <button class="btn" onclick="playTranslated()">🔊 Play</button>
+        <button class="btn btn-danger" onclick="stopTranslated()">⛔ Stop</button>
+    </div>
+</div>
+
+<!-- Semantic Alignment -->
+<div class="card">
+    <h3>Semantic Alignment Score</h3>
+    <div class="metric" style="font-size:1.4rem;">
+        {{ sem_sim }}
+    </div>
+</div>
+
+<!-- Named Entities -->
+<div class="card">
+    <h3>Named Entities (English)</h3>
+    <div style="display:flex; flex-wrap:wrap; gap:12px;">
+        {% for ent in ner_entities %}
+        <span style="background:#e0e7ff; padding:8px 16px; border-radius:20px; font-weight:600;">
+            {{ ent }}
+        </span>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Navigation -->
+<div style="text-align:center; margin-top:25px;">
+    <a href="/dashboard">
+        <button class="btn">Go to Interactive Dashboard</button>
+    </a>
+</div>
+
+<script>
+let speechSummary, speechTranslated;
+
+function playSummary(){
+    const text = document.getElementById("summaryText").innerText;
+    speechSummary = new SpeechSynthesisUtterance(text);
+    speechSummary.lang = "en-US";
+    speechSynthesis.speak(speechSummary);
+}
+
+function stopSummary(){
+    speechSynthesis.cancel();
+}
+
+function playTranslated(){
+    const text = document.getElementById("translatedText").innerText;
+    speechTranslated = new SpeechSynthesisUtterance(text);
+
+    const lang = "{{ selected_lang }}";
+    if(lang==="hi") speechTranslated.lang="hi-IN";
+    if(lang==="te") speechTranslated.lang="te-IN";
+    if(lang==="ta") speechTranslated.lang="ta-IN";
+    if(lang==="kn") speechTranslated.lang="kn-IN";
+
+    speechSynthesis.speak(speechTranslated);
+}
+
+function stopTranslated(){
+    speechSynthesis.cancel();
+}
+</script>
+
+{% endblock %}

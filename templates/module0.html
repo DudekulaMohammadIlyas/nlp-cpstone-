@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>Smart Input Studio</h1>
+
+<div class="card">
+  <h3>Enter Text or Upload File</h3>
+
+  <form method="POST" enctype="multipart/form-data">
+    <textarea name="text" placeholder="Paste your content here..."
+      style="width:100%;height:160px;border-radius:12px;padding:15px;"></textarea>
+
+    <div style="margin-top:20px;">
+      <label>Upload TXT / PDF / DOCX</label>
+      <input type="file" name="file" style="margin-top:10px;">
+    </div>
+
+    <div style="text-align:center;margin-top:25px;">
+      <button class="btn" type="submit">Analyze Text</button>
+    </div>
+  </form>
+</div>
+
+{% endblock %}

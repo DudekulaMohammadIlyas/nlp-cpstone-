@@ -82,7 +82,7 @@ async function processAll() {
     const formData = new FormData();
     if (fileIn) formData.append('file', fileIn);
     else formData.append('text', textIn);
-
+A
     document.getElementById("loading").style.display = "block";
 
     const res = await fetch("/process", { method: "POST", body: formData });
