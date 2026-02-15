@@ -1,8 +1,0 @@
-Flask
-transformers
-torch
-spacy
-nltk
-deep-translator
-PyPDF2
-python-docx

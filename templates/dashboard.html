@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>Explainable NLP Intelligence Dashboard</h1>
+
+<!-- POS Distribution Chart -->
+<div class="card">
+    <h3>Part-of-Speech Distribution Analysis</h3>
+    <p style="margin-bottom:15px;color:#475569;">
+        Click any POS bar to display related important words.
+    </p>
+
+    <!-- Scrollable Graph Container -->
+    <div style="overflow-x:auto;">
+        <div style="min-width:900px;">
+            <canvas id="posChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Dynamic Word Display -->
+<div class="card">
+    <h3>Words for Selected POS Tag</h3>
+    <p id="posWords" style="color:#1e293b;font-weight:500;">
+        Click a bar in the graph to view words for that POS tag.
+    </p>
+</div>
+
+<!-- POS Word Groups -->
+<div class="card">
+    <h3>Detected Important Words by POS Tags</h3>
+
+    {% if pos_groups %}
+        {% for tag, words in pos_groups.items() %}
+        <div style="margin-bottom:20px;padding:18px;border-radius:14px;background:#f8fafc;border-left:5px solid #4f46e5;">
+            <h4 style="margin-bottom:10px;color:#1e3a8a;">
+                {{ tag }} ({{ words|length }} words)
+            </h4>
+
+            <div class="panel-grid">
+                {% for w in words[:12] %}
+                <div class="metric" style="background:#eef2ff;color:#1e40af;">
+                    {{ w }}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>No POS-tagged words detected.</p>
+    {% endif %}
+</div>
+
+<!-- Report Download -->
+<div class="card">
+    <h3>Download Analytical Report</h3>
+    <p style="margin-bottom:15px;color:#475569;">
+        The report includes original text, generated summary, POS graph image, and parse tree diagram.
+    </p>
+
+    <div style="text-align:center;">
+        <a href="/download_report">
+            <button class="btn">Download Visual Report (PDF)</button>
+        </a>
+    </div>
+</div>
+
+<script>
+const posLabels = {{ pos_labels|tojson }};
+const posValues = {{ pos_values|tojson }};
+const posGroups = {{ pos_groups|tojson }};
+
+// dynamic color generation
+const colors = posLabels.map((_, i) => `hsl(${(i*45)%360},70%,55%)`);
+
+if(posLabels.length > 0){
+    const ctx = document.getElementById("posChart").getContext("2d");
+
+    new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: posLabels,
+            datasets: [{
+                label: "POS Count",
+                data: posValues,
+                backgroundColor: colors
+            }]
+        },
+        options: {
+            plugins:{ legend:{ display:false } },
+            scales:{ y:{ beginAtZero:true } },
+            onClick:(evt,items)=>{
+                if(items.length){
+                    const index=items[0].index;
+                    const tag=posLabels[index];
+                    const words=posGroups[tag] || [];
+                    document.getElementById("posWords").innerHTML =
+                        "<b>"+tag+" :</b> " + words.slice(0,30).join(", ");
+                }
+            }
+        }
+    });
+}
+</script>
+
+{% endblock %}

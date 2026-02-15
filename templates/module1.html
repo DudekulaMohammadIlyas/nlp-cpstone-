@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>Explainable Sentence Importance Visualization</h1>
+
+<!-- Emotional Tone -->
+<div class="card">
+    <h3>Emotional Tone Detected</h3>
+    <div class="metric">{{ tone }}</div>
+</div>
+
+<!-- Sentence Importance Analysis -->
+<div class="card">
+    <h3>Sentence Importance Analysis</h3>
+
+    {% for s in sent_cards %}
+    <div style="margin-bottom:25px;padding:20px;border-radius:14px;background:#f8fafc;border:1px solid #e2e8f0;">
+
+        <p style="font-weight:600;margin-bottom:12px;color:#0f172a;">
+            {{ s.sentence }}
+        </p>
+
+        <div class="panel-grid">
+            <div class="metric">
+                Importance Score<br>
+                <b>{{ s.importance }}%</b>
+            </div>
+
+            <div class="metric">
+                Sentence Length<br>
+                <b>{{ s.length }} words</b>
+            </div>
+
+            <div class="metric">
+                Keywords<br>
+                <b>{{ s.keywords|join(', ') }}</b>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div style="margin-top:15px;background:#e5e7eb;border-radius:10px;height:18px;overflow:hidden;">
+            <div style="width:{{ s.importance }}%;
+                        background:linear-gradient(90deg,#4f46e5,#0ea5e9);
+                        height:100%;
+                        border-radius:10px;"></div>
+        </div>
+
+    </div>
+    {% endfor %}
+</div>
+
+<!-- CENTERED & SCROLLABLE PARSE TREE -->
+<div class="card">
+    <h3>Parse Tree for Highest Importance Sentence</h3>
+    <p style="font-weight:600;margin-bottom:15px;text-align:center;">
+        {{ top_sentence }}
+    </p>
+
+    <!-- Scrollable + Centered Wrapper -->
+    <div style="
+        width:100%;
+        max-height:520px;
+        overflow:auto;
+        border:1px solid #e2e8f0;
+        border-radius:12px;
+        padding:20px;
+        background:#ffffff;
+        display:flex;
+        justify-content:center;
+    ">
+        <!-- Large centered drawing canvas -->
+        <div id="tree-container"></div>
+    </div>
+</div>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+const data = {{ parse_tree|safe }};
+
+// large canvas
+const width = 1600;
+const height = 600;
+
+const svg = d3.select("#tree-container")
+.append("svg")
+.attr("width", width)
+.attr("height", height);
+
+// center tree horizontally
+const g = svg.append("g")
+.attr("transform", "translate(" + (width/2) + ",40)");
+
+const root = d3.hierarchy(data);
+
+// symmetric layout
+const treeLayout = d3.tree().nodeSize([70, 200]);
+treeLayout(root);
+
+// shift nodes to center
+root.descendants().forEach(d => {
+    d.x = d.x - root.x;
+});
+
+// links
+g.selectAll("path")
+.data(root.links())
+.enter()
+.append("path")
+.attr("fill","none")
+.attr("stroke","#64748b")
+.attr("stroke-width",1.5)
+.attr("d", d3.linkVertical()
+  .x(d=>d.x)
+  .y(d=>d.y));
+
+// nodes
+const node = g.selectAll("g.node")
+.data(root.descendants())
+.enter()
+.append("g")
+.attr("transform", d=>`translate(${d.x},${d.y})`);
+
+node.append("circle")
+.attr("r",6)
+.attr("fill","#4f46e5");
+
+node.append("text")
+.attr("dy",-10)
+.attr("text-anchor","middle")
+.style("font-size","12px")
+.style("font-weight","600")
+.text(d=>d.data.name);
+</script>
+
+<div style="text-align:center;margin-top:25px;">
+    <a href="/translation">
+        <button class="btn">Proceed to Translation</button>
+    </a>
+</div>
+
+{% endblock %}
