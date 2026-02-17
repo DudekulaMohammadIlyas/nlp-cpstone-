@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, send_file
 import nltk, io, json, tempfile
 import docx2txt, PyPDF2
-from googletrans import Translator
+from deep_translator import GoogleTranslator
 from textblob import TextBlob
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -20,7 +20,6 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
 app = Flask(__name__)
-translator = Translator()
 
 nltk.download('punkt')
 nltk.download('averaged_perceptron_tagger')
@@ -171,7 +170,7 @@ def translation():
     if request.method == "POST" and DATA["summary"]:
         selected_lang = request.form.get("lang")
 
-        translated_text = translator.translate(DATA["summary"], dest=selected_lang).text
+        translated_text = GoogleTranslator(source='auto', target=selected_lang).translate(DATA["summary"])
         DATA["translated_langs"][selected_lang] = translated_text
 
         vect = TfidfVectorizer().fit([DATA["summary"], translated_text])
